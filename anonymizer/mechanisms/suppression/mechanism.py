@@ -1,4 +1,8 @@
 class Suppression:
+    """
+    The suppression mechanisms anonymizes input by replacing it with a fixed string of the same or custom length.
+    """
+
     def __init__(self, suppression_char="X", custom_length=None):
         """
         Initiates the suppression mechanism.

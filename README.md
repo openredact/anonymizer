@@ -21,5 +21,5 @@ pre-commit run --all-files
 
 The tests can be executed with:
 ```
-pytest --cov-report term --cov=anonymizer tests/
+pytest --doctest-modules --cov-report term --cov==anonymizer
 ```

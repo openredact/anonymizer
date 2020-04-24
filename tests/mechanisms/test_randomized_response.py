@@ -1,3 +1,5 @@
+import pytest
+
 from anonymizer.mechanisms.randomized_response import RandomizedResponse
 
 
@@ -14,12 +16,8 @@ def test_simple():
     assert thrown
 
     # Mismatch between distribution and values.
-    thrown = False
-    try:
-        mechanism = RandomizedResponse(["Yes"], probability_distribution=[[1, 0], [0, 1]])
-    except ValueError:
-        thrown = True
-    assert thrown
+    with pytest.raises(ValueError):
+        RandomizedResponse(["Yes"], probability_distribution=[[1, 0], [0, 1]])
 
 
 def test_coin():
@@ -31,12 +29,8 @@ def test_coin():
 
     # Throw error.
     mechanism = RandomizedResponse.with_coin(["Yes", "No"], coin_p=1)
-    thrown = False
-    try:
+    with pytest.raises(ValueError):
         mechanism.anonymize("Foobar")
-    except ValueError:
-        thrown = True
-    assert thrown
 
     # Always return other answer.
     weights = [[0, 1], [1, 0]]
@@ -54,12 +48,8 @@ def test_dp():
 
     # Throw error.
     mechanism = RandomizedResponse.with_coin(["Yes", "No"], coin_p=1)
-    thrown = False
-    try:
+    with pytest.raises(ValueError):
         mechanism.anonymize("Foobar")
-    except ValueError:
-        thrown = True
-    assert thrown
 
     # Always return other answer.
     weights = [[0, 1], [1, 0]]

@@ -5,6 +5,22 @@ A Python module that provides multiple anonymization techniques for text.
 ![Tests](https://github.com/paberr/anonymizer/workflows/Tests/badge.svg?branch=master)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg?style=flat-square)](https://github.com/ambv/black)
 
+## Install requirements
+
+You can install all requirements using:
+
+```
+pip install -r requirements.txt
+```
+
+Compared to installation with `setup.py`, [requirements.txt](requirements.txt) additionally installs developer dependencies.
+
+To install the package using `setup.py` run:
+
+```
+pip install .
+```
+
 ## Install the pre-commit hooks for developing
 
 ```

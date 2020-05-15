@@ -1,12 +1,19 @@
+from anonymizer.mechanisms.suppression.parameters import SuppressionParameters
+
+
 class Suppression:
     """
     The suppression mechanisms anonymizes input by replacing it with a fixed string of the same or custom length.
     """
 
-    def __init__(self, suppression_char="X", custom_length=None):
+    def __init__(self, parameters=None, **kwargs):
         """
         Initiates the suppression mechanism.
         This mechanisms takes two, optional parameters: `suppression_char` and `custom_length`.
+        Alternatively, the parameters can be passed as a `SuppressionParameters` object via `parameters`.
+        >>> mechanism = Suppression(parameters=SuppressionParameters())
+        >>> mechanism.anonymize('test')
+        'XXXX'
 
         The `suppression_char` parameter defines the character to be used for suppression (default: 'X').
 
@@ -28,8 +35,9 @@ class Suppression:
         >>> mechanism.anonymize('foobar')
         'XXXXXXX'
         """
-        self.suppression_char = suppression_char
-        self.custom_length = custom_length
+        parameters = SuppressionParameters(**kwargs) if parameters is None else parameters
+        self.suppression_char = parameters.suppression_char
+        self.custom_length = parameters.custom_length
 
     def __length(self, input_len):
         """

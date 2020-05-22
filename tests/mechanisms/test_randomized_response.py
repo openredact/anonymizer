@@ -1,6 +1,8 @@
 import pytest
+from pydantic import ValidationError
 
-from anonymizer.mechanisms.randomized_response import RandomizedResponse
+from anonymizer.mechanisms.randomized_response import RandomizedResponse, RandomizedResponseParameters
+from anonymizer.utils.discrete_distribution import DiscreteDistribution
 
 
 def test_simple():
@@ -56,3 +58,24 @@ def test_dp():
     mechanism = RandomizedResponse.with_coin(["Yes", "No"], coin_p=0, probability_distribution=weights)
     assert mechanism.anonymize("Yes") == "No"
     assert mechanism.anonymize("No") == "Yes"
+
+
+def test_parameters_model():
+    mechanism = RandomizedResponse(
+        RandomizedResponseParameters(values=["Yes", "No"], probability_distribution=[[1, 0], [0, 1]])
+    )
+    assert mechanism.anonymize("No") == "No"
+    assert mechanism.anonymize("Yes") == "Yes"
+
+    with pytest.raises(ValidationError):
+        RandomizedResponseParameters(values=["Yes"], probability_distribution=[[1, 0], [0, 1]])
+
+    with pytest.raises(ValidationError):
+        d = DiscreteDistribution([1, 0])
+        d.is_matrix = True
+        RandomizedResponseParameters(values=["Yes"], probability_distribution=d)
+
+    with pytest.raises(ValidationError):
+        d = DiscreteDistribution([[1, 0], [0, 1]])
+        d.probabilities = [[1, 0], [0]]
+        RandomizedResponseParameters(values=["Yes"], probability_distribution=d)

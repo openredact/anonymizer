@@ -1,4 +1,6 @@
 import math
+
+from anonymizer.mechanisms.randomized_response.parameters import RandomizedResponseParameters
 from anonymizer.utils.discrete_distribution import DiscreteDistribution
 
 
@@ -12,10 +14,11 @@ class RandomizedResponse:
     Section 4: POLYCHOTOMOUS ATTRIBUTE
     """
 
-    def __init__(self, values, probability_distribution, default_value=None):
+    def __init__(self, values, probability_distribution=None, **kwargs):
         """
         Initiates the randomized response mechanism.
         This mechanisms takes two mandatory parameters: `values` and `probability_distribution`.
+        Alternatively, a `RandomizedResponseParameters` object can be passed.
 
         The `values` parameter defines the list of potential replacements to select from.
         The `probability_distribution` parameter can be either of the following three:
@@ -42,14 +45,20 @@ class RandomizedResponse:
         >>> mechanism.anonymize('Foobar')
         '<UNKNOWN>'
         """
+
+        parameters = (
+            values
+            if isinstance(values, RandomizedResponseParameters)
+            else RandomizedResponseParameters(values=values, probability_distribution=probability_distribution, **kwargs)
+        )
+        probability_distribution = parameters.probability_distribution
+
         if not isinstance(probability_distribution, DiscreteDistribution):
             probability_distribution = DiscreteDistribution(probability_distribution)
 
-        if len(values) != len(probability_distribution):
-            raise ValueError("Values and distribution must be of the same size.")
         self.cum_distr = probability_distribution.to_cumulative()
-        self.values = values
-        self.default_value = default_value
+        self.values = parameters.values
+        self.default_value = parameters.default_value
 
     @classmethod
     def with_dp(cls, values, epsilon, default_value=None):
@@ -76,7 +85,7 @@ class RandomizedResponse:
                 else:
                     weights[i].append(p_ij)
         d = DiscreteDistribution(weights)
-        return RandomizedResponse(values, d, default_value)
+        return RandomizedResponse(values, d, default_value=default_value)
 
     @classmethod
     def with_coin(cls, values, coin_p=0.5, probability_distribution=None, default_value=None):
@@ -96,7 +105,7 @@ class RandomizedResponse:
             d = DiscreteDistribution(probability_distribution)
 
         d_rr = d.with_rr_toss(coin_p)
-        return RandomizedResponse(values, d_rr, default_value)
+        return RandomizedResponse(values, d_rr, default_value=default_value)
 
     def anonymize(self, input_value):
         """

@@ -41,6 +41,21 @@ class DiscreteDistribution:
         """
         return UniformDistribution(n)
 
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, v):
+        if not isinstance(v, DiscreteDistribution):
+            raise TypeError("DiscreteDistribution required")
+        cols = len(v.probabilities)
+        if isinstance(v.probabilities[0], list) != v.is_matrix:
+            raise ValueError("`is_matrix` value is inconsistent")
+        if any([isinstance(c, list) and len(c) != cols for c in v.probabilities]):
+            raise ValueError("Matrix must be of square size")
+        return v
+
     @staticmethod
     def __normalize_row(row):
         """

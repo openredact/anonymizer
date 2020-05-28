@@ -15,3 +15,7 @@ def test_parameters_model():
 
     mechanism = Generalization(GeneralizationParameters(replacement=lambda x: x.split()[0] + " person"))
     assert mechanism.anonymize("a woman") == "a person"
+
+    parameters = GeneralizationParameters(replacement=lambda x: x.split()[0] + " person")
+    mechanism = parameters.build()
+    assert mechanism.anonymize("a woman") == "a person"

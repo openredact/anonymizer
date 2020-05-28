@@ -1,4 +1,14 @@
-from anonymizer.mechanisms.pseudonymization.parameters import PseudonymizationParameters
+from pydantic import constr
+
+from . import MechanismModel
+
+
+class PseudonymizationParameters(MechanismModel):
+    format_string: constr(regex="^[^{}]*{}[^{}]*$")
+    initial_counter_value: int = 1
+
+    def build(self):
+        return Pseudonymization(self)
 
 
 class Pseudonymization:

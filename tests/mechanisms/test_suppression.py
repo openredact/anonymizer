@@ -43,3 +43,7 @@ def test_parameters_model(input_value):
     parameters = SuppressionParameters(custom_length=lambda l: l // 2)
     mechanism = Suppression(parameters=parameters)
     assert mechanism.anonymize(input_value) == "XXX"
+
+    parameters = SuppressionParameters(custom_length=lambda l: l // 2)
+    mechanism = parameters.build()
+    assert mechanism.anonymize(input_value) == "XXX"

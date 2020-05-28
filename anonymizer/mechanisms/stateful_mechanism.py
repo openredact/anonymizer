@@ -1,3 +1,13 @@
+from . import MechanismModel
+
+
+class StatefulMechanismParameters(MechanismModel):
+    mechanism_config: MechanismModel
+
+    def build(self):
+        return StatefulMechanism(self)
+
+
 class StatefulMechanism:
     """
     A stateful mechanism is a wrapper around any other mechanism.
@@ -12,7 +22,13 @@ class StatefulMechanism:
         >>> from anonymizer.mechanisms.suppression import Suppression
         >>> mechanism = StatefulMechanism(Suppression(custom_length=lambda _: randint(1, 9)))
         >>> assert mechanism.anonymize('foobar') == mechanism.anonymize('foobar')
+
+        Alternatively, this can be a `StatefulMechanismParameters` object. In this case,
+        initialization will be carried out in the constructor.
         """
+        if isinstance(mechanism, StatefulMechanismParameters):
+            mechanism = mechanism.mechanism_config.build()
+
         self.mechanism = mechanism
         self.anonymizations = dict()
 

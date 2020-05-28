@@ -28,3 +28,7 @@ def test_parameters_model(input_value):
 
     with pytest.raises(ValidationError):
         PseudonymizationParameters(format_string="Test")
+
+    parameters = PseudonymizationParameters(format_string="Test ({})", initial_counter_value=0)
+    mechanism = parameters.build()
+    assert mechanism.anonymize(input_value) == "Test (0)"

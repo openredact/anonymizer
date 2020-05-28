@@ -1,4 +1,13 @@
-from anonymizer.mechanisms.generalization.parameters import GeneralizationParameters
+from typing import Union, Callable
+
+from . import MechanismModel
+
+
+class GeneralizationParameters(MechanismModel):
+    replacement: Union[str, Callable[[str], str]]
+
+    def build(self):
+        return Generalization(self)
 
 
 class Generalization:

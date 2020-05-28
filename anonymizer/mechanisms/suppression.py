@@ -1,4 +1,14 @@
-from anonymizer.mechanisms.suppression.parameters import SuppressionParameters
+from typing import Union, Callable
+
+from . import MechanismModel
+
+
+class SuppressionParameters(MechanismModel):
+    suppression_char: str = "X"
+    custom_length: Union[int, Callable[[int], int], None] = None
+
+    def build(self):
+        return Suppression(parameters=self)
 
 
 class Suppression:

@@ -79,3 +79,8 @@ def test_parameters_model():
         d = DiscreteDistribution([[1, 0], [0, 1]])
         d.probabilities = [[1, 0], [0]]
         RandomizedResponseParameters(values=["Yes"], probability_distribution=d)
+
+    parameters = RandomizedResponseParameters(values=["Yes", "No"], probability_distribution=[[1, 0], [0, 1]])
+    mechanism = parameters.build()
+    assert mechanism.anonymize("No") == "No"
+    assert mechanism.anonymize("Yes") == "Yes"

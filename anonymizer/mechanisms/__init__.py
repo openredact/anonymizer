@@ -1,6 +1,6 @@
-from pydantic import BaseModel
+from anonymizer.utils.pydantic_base_model import CamelBaseModel
 
 
-class MechanismModel(BaseModel):
+class MechanismModel(CamelBaseModel):
     def build(self):
         pass

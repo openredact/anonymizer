@@ -2,7 +2,7 @@
 The Pii class is the interface to other components of OpenRedact.
 """
 
-from dataclasses import dataclass
+from pydantic.dataclasses import dataclass
 
 
 @dataclass

@@ -1,6 +1,7 @@
 import math
 from pydantic import validator
 from typing import Union, List, Optional
+import numpy as np
 
 from anonymizer.utils.discrete_distribution import DiscreteDistribution
 from . import MechanismModel
@@ -96,15 +97,13 @@ class RandomizedResponse:
         p_ii = e_eps / denominator
         p_ij = 1 / denominator
 
-        # TODO: n^2 operation
-        weights = []
-        for i in range(t):
-            weights.append([])
-            for j in range(t):
-                if i == j:
-                    weights[i].append(p_ii)
-                else:
-                    weights[i].append(p_ij)
+        # Create a matrix filled with p_ij
+        weights = np.full((t, t), p_ij)
+        # Create a matrix with diagonal entries p_ii - p_ij
+        diag = np.zeros((t, t))
+        np.fill_diagonal(diag, p_ii - p_ij)
+        # Sum the two matrices to obtain our result
+        weights += diag
         d = DiscreteDistribution(weights)
         return RandomizedResponse(values, d, default_value=default_value)
 

@@ -1,9 +1,10 @@
 # Dependencies
 pydantic==1.5.1
+numpy==1.18.5
 
 # Development dependencies
 pre-commit==2.4.0
 black==19.10b0
-flake8==3.8.1
-pytest==5.4.2
-pytest-cov==2.8.1
+flake8==3.8.2
+pytest==5.4.3
+pytest-cov==2.9.0

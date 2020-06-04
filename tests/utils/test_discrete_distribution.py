@@ -1,4 +1,6 @@
 import random
+import pytest
+
 from anonymizer.utils.discrete_distribution import DiscreteDistribution
 
 
@@ -64,3 +66,11 @@ def test_matrix():
     d1 = d.with_rr_toss(1)
     c1 = d1.to_cumulative()
     assert [c1.sample_element(i, rng=random) for i in range(10)] == list(range(10))
+
+
+def test_others():
+    with pytest.raises(ValueError):
+        DiscreteDistribution(0)
+
+    with pytest.raises(ValueError):
+        DiscreteDistribution([[[1]]])

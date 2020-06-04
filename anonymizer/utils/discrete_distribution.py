@@ -1,5 +1,5 @@
-import itertools
 import random
+import numpy as np
 
 
 # TODO: Replace by faster method to generate values according to the distribution.
@@ -27,11 +27,14 @@ class DiscreteDistribution:
 
         This method will take care of normalizing the weights, so that each row sums up to 1.
         """
-        if len(weights) < 1:
+        weights = np.array(weights)
+        if len(weights.shape) != 1 and len(weights.shape) != 2:
+            raise ValueError("Weights must be a list or matrix")
+        if any([length < 1 for length in weights.shape]):
             raise ValueError("Cannot create an empty probability distribution")
 
         self.probabilities = weights
-        self.is_matrix = isinstance(weights[0], list)
+        self.is_matrix = len(weights.shape) == 2
         self.normalize()
 
     @classmethod
@@ -49,20 +52,12 @@ class DiscreteDistribution:
     def validate(cls, v):
         if not isinstance(v, DiscreteDistribution):
             raise TypeError("DiscreteDistribution required")
-        cols = len(v.probabilities)
-        if isinstance(v.probabilities[0], list) != v.is_matrix:
+        if not isinstance(v.probabilities, np.ndarray):
+            raise TypeError("`probabilities` attribute must be numpy array")
+        shape = v.probabilities.shape
+        if (len(shape) == 2) != v.is_matrix:
             raise ValueError("`is_matrix` value is inconsistent")
-        if any([isinstance(c, list) and len(c) != cols for c in v.probabilities]):
-            raise ValueError("Matrix must be of square size")
         return v
-
-    @staticmethod
-    def __normalize_row(row):
-        """
-        Normalizes a row by dividing each entry by the sum over all probabilities.
-        """
-        weight_sum = sum(row)
-        return [weight / weight_sum for weight in row]
 
     def normalize(self):
         """
@@ -73,10 +68,12 @@ class DiscreteDistribution:
         """
         if self.is_matrix:
             # Matrix case
-            self.probabilities = [DiscreteDistribution.__normalize_row(row) for row in self.probabilities]
+            norm = np.abs(self.probabilities).sum(axis=1)[np.newaxis]
+            self.probabilities = self.probabilities / norm.transpose()
         else:
             # Array case
-            self.probabilities = DiscreteDistribution.__normalize_row(self.probabilities)
+            norm = np.abs(self.probabilities).sum()
+            self.probabilities = self.probabilities / norm
 
     def to_full_distribution(self):
         """
@@ -88,7 +85,8 @@ class DiscreteDistribution:
         if self.is_matrix:
             return self
         else:
-            probabilities = [list(self.probabilities) for _ in range(len(self.probabilities))]
+            size = self.probabilities.shape[0]
+            probabilities = np.tile(self.probabilities, (size, size))
             return DiscreteDistribution(probabilities)
 
     def to_cumulative(self):
@@ -107,13 +105,15 @@ class DiscreteDistribution:
         Returns a new distribution and does not modify the current one.
         """
         full = self.to_full_distribution()
-        n = len(full.probabilities)
-        for i in range(n):
-            for j in range(n):
-                full.probabilities[i][j] *= 1 - p
-                if i == j:
-                    full.probabilities[i][j] += p
+        # Multiply each entry by (1 - p)
+        full.probabilities *= 1 - p
 
+        # Create diagonal matrix with p
+        diag = np.zeros(full.probabilities.shape)
+        np.fill_diagonal(diag, p)
+
+        # Add p along diagonal
+        full.probabilities += diag
         return full
 
     def __len__(self):
@@ -134,10 +134,10 @@ class CumulativeDiscreteDistribution:
         Creates a new cumulative distribution from a DiscreteDistribution.
         """
         if discrete_distribution.is_matrix:
-            self.cum_probabilities = [list(itertools.accumulate(row)) for row in discrete_distribution.probabilities]
+            self.cum_probabilities = np.cumsum(discrete_distribution.probabilities, axis=1)
             self.is_matrix = True
         else:
-            self.cum_probabilities = list(itertools.accumulate(discrete_distribution.probabilities))
+            self.cum_probabilities = np.cumsum(discrete_distribution.probabilities)
             self.is_matrix = False
 
     def sample_element(self, input_idx, rng=random.SystemRandom()):
@@ -184,8 +184,7 @@ class UniformDistribution(DiscreteDistribution, CumulativeDiscreteDistribution):
         Returns the full matrix representation for any discrete distribution representation.
         This allows to have a consistent representation for operations on the matrix.
         """
-        probabilities = [1] * self.n  # will automatically be normalized
-        probabilities = [list(probabilities) for _ in range(self.n)]
+        probabilities = np.ones((self.n, self.n))
         return DiscreteDistribution(probabilities)
 
     def to_cumulative(self):

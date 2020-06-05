@@ -18,8 +18,7 @@ def piis():
     ]
 
 
-def test_simple(piis):
-    # Default mechanism set.
+def test_with_default(piis):
     config = AnonymizerConfig(
         default_mechanism=SuppressionParameters(),
         mechanisms_by_tag={
@@ -41,7 +40,9 @@ def test_simple(piis):
 
     assert list(anonymizer.anonymize(piis)) == anonymized_piis
 
-    # Default mechanism not set + stateful pseudonymization.
+
+def test_without_default(piis):
+    # + stateful pseudonymization.
     config = AnonymizerConfig(
         mechanisms_by_tag={
             "foo": SuppressionParameters(suppression_char="Y", custom_length=3),

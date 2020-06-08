@@ -2,12 +2,14 @@ import math
 from pydantic import validator
 from typing import Union, List, Optional
 import numpy as np
+from pydantic.types import constr
 
 from anonymizer.utils.discrete_distribution import DiscreteDistribution
-from . import MechanismModel
+from ._base import MechanismModel
 
 
 class RandomizedResponseParameters(MechanismModel):
+    MECHANISM: constr(regex="^randomizedResponse$") = "randomizedResponse"
     values: List[str]
     probability_distribution: Union[DiscreteDistribution, List[float], List[List[float]]]
     default_value: Optional[str] = None

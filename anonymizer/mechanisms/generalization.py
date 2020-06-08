@@ -1,13 +1,23 @@
 from typing import Union, Callable
 
-from . import MechanismModel
+from pydantic.types import constr
+
+from ._base import MechanismModel
 
 
 class GeneralizationParameters(MechanismModel):
+    MECHANISM: constr(regex="^generalization$") = "generalization"
     replacement: Union[str, Callable[[str], str]]
 
     def build(self):
         return Generalization(self)
+
+    class Config:
+        @staticmethod
+        def schema_extra(schema):
+            # manually add the replacement property which is ignored by pydantic because it accepts callables
+            schema["properties"]["replacement"] = {"title": "Replacement", "type": "string"}
+            schema["required"] = ["replacement"]
 
 
 class Generalization:

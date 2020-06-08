@@ -1,6 +1,4 @@
-from anonymizer.utils.pydantic_base_model import CamelBaseModel
+from ._type_helpers import mechanism_config_types
+from ._base import MechanismModel  # noqa: F401
 
-
-class MechanismModel(CamelBaseModel):
-    def build(self):
-        pass
+mechanism_config_types = mechanism_config_types()

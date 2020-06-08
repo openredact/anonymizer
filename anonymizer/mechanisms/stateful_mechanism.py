@@ -1,8 +1,12 @@
-from . import MechanismModel
+from pydantic.types import constr
+
+from ._base import MechanismModel
+from ._type_helpers import mechanism_config_types_wo_stateful
 
 
 class StatefulMechanismParameters(MechanismModel):
-    mechanism_config: MechanismModel
+    MECHANISM: constr(regex="^statefulMechanism$") = "statefulMechanism"
+    mechanism_config: mechanism_config_types_wo_stateful()
 
     def build(self):
         return StatefulMechanism(self)

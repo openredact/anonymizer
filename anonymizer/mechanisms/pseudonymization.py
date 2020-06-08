@@ -1,9 +1,10 @@
 from pydantic import constr
 
-from . import MechanismModel
+from ._base import MechanismModel
 
 
 class PseudonymizationParameters(MechanismModel):
+    MECHANISM: constr(regex="^pseudonymization$") = "pseudonymization"
     format_string: constr(regex="^[^{}]*{}[^{}]*$")
     initial_counter_value: int = 1
 

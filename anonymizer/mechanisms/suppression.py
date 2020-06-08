@@ -1,14 +1,23 @@
 from typing import Union, Callable
 
-from . import MechanismModel
+from pydantic.types import constr
+
+from ._base import MechanismModel
 
 
 class SuppressionParameters(MechanismModel):
+    MECHANISM: constr(regex="^suppression$") = "suppression"
     suppression_char: str = "X"
     custom_length: Union[int, Callable[[int], int], None] = None
 
     def build(self):
         return Suppression(parameters=self)
+
+    class Config:
+        @staticmethod
+        def schema_extra(schema):
+            # manually add the customLength property which is ignored by pydantic because it accepts callables
+            schema["properties"]["customLength"] = {"title": "CustomLength", "type": "integer"}
 
 
 class Suppression:

@@ -1,31 +1,79 @@
 import math
+from enum import Enum
+
 from pydantic import validator
-from typing import Union, List, Optional
+from typing import List, Optional
 import numpy as np
 from pydantic.types import constr
 
-from anonymizer.utils.discrete_distribution import DiscreteDistribution
+from anonymizer.utils.discrete_distribution import DiscreteDistribution, DiscreteDistributionModel
 from ._base import MechanismModel
+
+
+class RandomizedResponseMode(str, Enum):
+    custom = "custom"
+    coin = "coin"
+    dp = "dp"
 
 
 class RandomizedResponseParameters(MechanismModel):
     MECHANISM: constr(regex="^randomizedResponse$") = "randomizedResponse"
     values: List[str]
-    probability_distribution: Union[DiscreteDistribution, List[float], List[List[float]]]
+    mode: RandomizedResponseMode = RandomizedResponseMode.custom
+    probability_distribution: Optional[DiscreteDistributionModel] = None  # RandomizedResponseMode.{custom, coin}
+    epsilon: Optional[float] = None  # Only used for RandomizedResponseMode.dp
+    coin_p: Optional[float] = None  # Only used for RandomizedResponseMode.coin
     default_value: Optional[str] = None
 
-    @validator("probability_distribution")
+    @validator("probability_distribution", always=True)
     def distribution_size_matches(cls, v, values, **kwargs):
-        if "values" in values:
+        if "values" not in values:
+            raise ValueError("Missing required property: values")
+        mode = values["mode"]
+        if mode in (RandomizedResponseMode.custom, RandomizedResponseMode.coin):
             num_values = len(values["values"])
-            if len(v) != num_values or (
-                isinstance(v, list) and any([isinstance(row, list) and len(row) != num_values for row in v])
-            ):  # TODO: changes with numpy
+            if not isinstance(v, DiscreteDistributionModel) or v.shape() != num_values:
                 raise ValueError("Size of probability distribution does not match values")
-        return v
+            return v
+        else:
+            return None
+
+    @validator("epsilon", always=True)
+    def epsilon_check(cls, v, values, **kwargs):
+        mode = values["mode"]
+        if mode == RandomizedResponseMode.dp:
+            if v is None:
+                raise ValueError("DP mode requires epsilon value")
+            return v
+        else:
+            return None
+
+    @validator("coin_p", always=True)
+    def coin_p_check(cls, v, values, **kwargs):
+        mode = values["mode"]
+        if mode == RandomizedResponseMode.coin:
+            if v is None:
+                raise ValueError("Coin mode requires coin_p value")
+            return v
+        else:
+            return None
 
     def build(self):
+        if self.mode == RandomizedResponseMode.dp:
+            return RandomizedResponse.with_dp(self.values, self.epsilon, self.default_value)
+        elif self.mode == RandomizedResponseMode.coin:
+            return RandomizedResponse.with_coin(self.values, self.coin_p, self.probability_distribution, self.default_value)
         return RandomizedResponse(self)
+
+    class Config:
+        # Make sure conditional requirements are adequately reflected.
+        schema_extra = {
+            "anyOf": [
+                {"properties": {"mode": {"const": "custom"}}, "required": ["probabilityDistribution"]},
+                {"properties": {"mode": {"const": "dp"}}, "required": ["epsilon"]},
+                {"properties": {"mode": {"const": "coin"}}, "required": ["coinP"]},
+            ]
+        }
 
 
 class RandomizedResponse:
@@ -70,19 +118,25 @@ class RandomizedResponse:
         '<UNKNOWN>'
         """
 
-        parameters = (
-            values
-            if isinstance(values, RandomizedResponseParameters)
-            else RandomizedResponseParameters(values=values, probability_distribution=probability_distribution, **kwargs)
-        )
-        probability_distribution = parameters.probability_distribution
-
         if not isinstance(probability_distribution, DiscreteDistribution):
-            probability_distribution = DiscreteDistribution(probability_distribution)
+            parameters = (
+                values
+                if isinstance(values, RandomizedResponseParameters)
+                else RandomizedResponseParameters(
+                    values=values,
+                    probability_distribution=DiscreteDistributionModel(weights=probability_distribution),
+                    **kwargs
+                )
+            )
+            probability_distribution = DiscreteDistribution(parameters.probability_distribution)
+            values = parameters.values
+            default_value = parameters.default_value
+        else:
+            default_value = kwargs["default_value"] if "default_value" in kwargs else None
 
         self.cum_distr = probability_distribution.to_cumulative()
-        self.values = parameters.values
-        self.default_value = parameters.default_value
+        self.values = values
+        self.default_value = default_value
 
     @classmethod
     def with_dp(cls, values, epsilon, default_value=None):

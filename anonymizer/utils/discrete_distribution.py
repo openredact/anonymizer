@@ -1,10 +1,25 @@
 import random
+from typing import Union, List
+
 import numpy as np
+from pydantic import BaseModel, validator
 
 
-# TODO: Replace by faster method to generate values according to the distribution.
-# Operations on the distribution are O(n^2), so usage of numpy could be beneficial.
-# Numpy, however, does not seem to allow us to use a CSPRNG (cryptographically secure pseudo-random number generator).
+class DiscreteDistributionModel(BaseModel):
+    weights: Union[List[float], List[List[float]]]
+
+    @validator("weights")
+    def weights_shape(cls, v, values, **kwargs):
+        num_values = len(v)
+        is_matrix = any([isinstance(row, list) for row in v])
+        if num_values == 0 or (is_matrix and any([not isinstance(row, list) or len(row) != num_values for row in v])):
+            raise ValueError("Size of weights must not be 0 and must be a list or square matrix")
+        return v
+
+    def shape(self):
+        return len(self.weights)
+
+
 class DiscreteDistribution:
     """
     This class represents a (conditional) discrete probability distribution.
@@ -22,13 +37,18 @@ class DiscreteDistribution:
     def __init__(self, weights):
         """
         Creates a new discrete distribution.
-        The input can be either a list of weights (if `P(output = j | input = i) = P(output = j)`)
-        or a matrix of weights.
+        The input can be either a list of weights (if `P(output = j | input = i) = P(output = j)`),
+        a matrix of weights, or a `DiscreteDistributionModel`.
 
         This method will take care of normalizing the weights, so that each row sums up to 1.
         """
-        weights = np.array(weights)
-        if len(weights.shape) != 1 and len(weights.shape) != 2:
+        if not isinstance(weights, np.ndarray):
+            weights = weights if isinstance(weights, DiscreteDistributionModel) else DiscreteDistributionModel(weights=weights)
+            weights = np.array(weights.weights)
+
+        if weights.dtype == np.dtype("O"):
+            raise ValueError("Weights must be a list or matrix of number types")
+        if len(weights.shape) not in (1, 2):
             raise ValueError("Weights must be a list or matrix")
         if any([length < 1 for length in weights.shape]):
             raise ValueError("Cannot create an empty probability distribution")
@@ -43,21 +63,6 @@ class DiscreteDistribution:
         Creates a uniform distribution over n values.
         """
         return UniformDistribution(n)
-
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
-
-    @classmethod
-    def validate(cls, v):
-        if not isinstance(v, DiscreteDistribution):
-            raise TypeError("DiscreteDistribution required")
-        if not isinstance(v.probabilities, np.ndarray):
-            raise TypeError("`probabilities` attribute must be numpy array")
-        shape = v.probabilities.shape
-        if (len(shape) == 2) != v.is_matrix:
-            raise ValueError("`is_matrix` value is inconsistent")
-        return v
 
     def normalize(self):
         """

@@ -1,7 +1,6 @@
 import pytest
 
-from anonymizer.mechanisms.suppression import Suppression, SuppressionParameters
-from anonymizer.mechanisms.stateful_mechanism import StatefulMechanism, StatefulMechanismParameters
+from anonymizer.mechanisms.suppression import Suppression
 
 
 @pytest.fixture()
@@ -22,19 +21,10 @@ def test_rng():
 
 
 def test_stateful(input_value):
-    mechanism = Suppression(custom_length=test_rng())
+    mechanism = Suppression(custom_length=test_rng(), stateful=False)
     # Normal suppression should return different outputs.
     assert mechanism.anonymize(input_value) != mechanism.anonymize(input_value)
 
-    stateful_mechanism = StatefulMechanism(mechanism)
+    stateful_mechanism = Suppression(custom_length=test_rng(), stateful=True)
     # Stateful suppression should return same output.
     assert stateful_mechanism.anonymize(input_value) == stateful_mechanism.anonymize(input_value)
-
-
-def test_parameters_model():
-    parameters = StatefulMechanismParameters(
-        mechanism_config=SuppressionParameters(custom_length=test_rng(), suppression_char="Y")
-    )
-    mechanism = parameters.build()
-    assert mechanism.anonymize("Darth Vader 1") != mechanism.anonymize("Darth Vader 2")
-    assert mechanism.anonymize("Darth Vader 1") == mechanism.anonymize("Darth Vader 1")

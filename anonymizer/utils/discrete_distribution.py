@@ -1,23 +1,6 @@
 import random
-from typing import Union, List
 
 import numpy as np
-from pydantic import BaseModel, validator
-
-
-class DiscreteDistributionModel(BaseModel):
-    weights: Union[List[float], List[List[float]]]
-
-    @validator("weights")
-    def weights_shape(cls, v, values, **kwargs):
-        num_values = len(v)
-        is_matrix = any([isinstance(row, list) for row in v])
-        if num_values == 0 or (is_matrix and any([not isinstance(row, list) or len(row) != num_values for row in v])):
-            raise ValueError("Size of weights must not be 0 and must be a list or square matrix")
-        return v
-
-    def shape(self):
-        return len(self.weights)
 
 
 class DiscreteDistribution:
@@ -38,13 +21,12 @@ class DiscreteDistribution:
         """
         Creates a new discrete distribution.
         The input can be either a list of weights (if `P(output = j | input = i) = P(output = j)`),
-        a matrix of weights, or a `DiscreteDistributionModel`.
+        or a matrix of weights.
 
         This method will take care of normalizing the weights, so that each row sums up to 1.
         """
         if not isinstance(weights, np.ndarray):
-            weights = weights if isinstance(weights, DiscreteDistributionModel) else DiscreteDistributionModel(weights=weights)
-            weights = np.array(weights.weights)
+            weights = np.array(weights)
 
         if weights.dtype == np.dtype("O"):
             raise ValueError("Weights must be a list or matrix of number types")
@@ -56,6 +38,27 @@ class DiscreteDistribution:
         self.probabilities = weights
         self.is_matrix = len(weights.shape) == 2
         self.normalize()
+
+    @classmethod
+    def __get_validators__(cls):
+        # one or more validators may be yielded which will be called in the
+        # order to validate the input, each validator will receive as an input
+        # the value returned from the previous validator
+        yield cls.validate
+
+    @classmethod
+    def __modify_schema__(cls, field_schema):
+        # __modify_schema__ should mutate the dict it receives in place,
+        # the returned value will be ignored
+        field_schema.update(
+            title="DiscreteDistribution", type="object",
+        )
+
+    @classmethod
+    def validate(cls, v):
+        if not isinstance(v, DiscreteDistribution):
+            raise TypeError("DiscreteDistribution required")
+        return v
 
     @classmethod
     def uniform_distribution(cls, n):

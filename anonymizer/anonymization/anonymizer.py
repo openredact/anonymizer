@@ -15,8 +15,8 @@ class Anonymizer:
         """
         Create an Anonymizer from an `AnonymizerConfig`.
         """
-        self.default_mechanism = None if config.default_mechanism is None else config.default_mechanism.build()
-        self.mechanisms_by_tag = {tag: c.build() for tag, c in config.mechanisms_by_tag.items()}
+        self.default_mechanism = None if config.default_mechanism is None else config.default_mechanism.config
+        self.mechanisms_by_tag = {tag: c.config for tag, c in config.mechanisms_by_tag.items()}
 
     def anonymize(self, piis: Union[Pii, List[Pii]]) -> Union[AnonymizedPii, Iterator[AnonymizedPii]]:
         """

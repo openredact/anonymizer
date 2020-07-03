@@ -9,7 +9,7 @@ from pydantic.dataclasses import dataclass
 class Pii:
     tag: str
     text: str
-    id: int = None  # An optional identifier for the entity to be anonymized.
+    id: str = None  # An optional identifier for the entity to be anonymized.
 
 
 @dataclass

@@ -1,4 +1,4 @@
-name: Format and Lint
+name: Black & Flake8
 
 on:
   pull_request:

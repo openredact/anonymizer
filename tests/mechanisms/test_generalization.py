@@ -1,21 +1,17 @@
-from anonymizer.mechanisms.generalization import Generalization, GeneralizationParameters
+import pytest
+from pydantic import ValidationError
+
+from anonymizer.mechanisms.generalization import Generalization
 
 
 def test_simple():
-    mechanism = Generalization("<NAME>")
+    mechanism = Generalization(replacement="<NAME>")
     assert mechanism.anonymize("Darth Vader") == "<NAME>"
 
-    mechanism = Generalization(lambda x: x.split()[0] + " person")
+    mechanism = Generalization(replacement=lambda x: x.split()[0] + " person")
     assert mechanism.anonymize("a woman") == "a person"
 
 
-def test_parameters_model():
-    mechanism = Generalization(GeneralizationParameters(replacement="<NAME>"))
-    assert mechanism.anonymize("Darth Vader") == "<NAME>"
-
-    mechanism = Generalization(GeneralizationParameters(replacement=lambda x: x.split()[0] + " person"))
-    assert mechanism.anonymize("a woman") == "a person"
-
-    parameters = GeneralizationParameters(replacement=lambda x: x.split()[0] + " person")
-    mechanism = parameters.build()
-    assert mechanism.anonymize("a woman") == "a person"
+def test_invalid_arguments(input_value):
+    with pytest.raises(ValidationError):
+        Generalization()

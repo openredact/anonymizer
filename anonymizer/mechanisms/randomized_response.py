@@ -2,12 +2,13 @@ import math
 from enum import Enum
 
 from pydantic import validator
-from typing import List, Optional
+from typing import List, Optional, Union
 import numpy as np
 from pydantic.types import constr
 
-from anonymizer.utils.discrete_distribution import DiscreteDistribution, DiscreteDistributionModel
-from ._base import MechanismModel
+from anonymizer.utils.discrete_distribution import DiscreteDistribution
+from .stateful_mechanism import StatefulMechanism
+from ..utils.pydantic_base_model import CamelBaseModel
 
 
 class RandomizedResponseMode(str, Enum):
@@ -16,11 +17,48 @@ class RandomizedResponseMode(str, Enum):
     dp = "dp"
 
 
-class RandomizedResponseParameters(MechanismModel):
+class RandomizedResponse(StatefulMechanism):
+    """
+    The randomized response mechanisms anonymizes input by replacing it with a certain probability
+    with a value drawn from a given probability distribution.
+
+    See: "Using Randomized Response for Differential Privacy Preserving Data Collection" by Wang, Wu, and Hu
+    http://csce.uark.edu/~xintaowu/publ/DPL-2014-003.pdf
+    Section 4: POLYCHOTOMOUS ATTRIBUTE
+
+    This mechanisms takes two mandatory parameters: `values` and `probability_distribution`.
+
+    The `values` parameter defines the list of potential replacements to select from.
+    The `probability_distribution` parameter can be either of the following three:
+    1) An instance of `DiscreteDistribution`,
+    2) A list of weights with `len(probability_distribution) == len(values)`,
+    3) A matrix where each row represents the list of weights for an input value,
+       i.e., `probability_distribution[i][j]` is the probability of outputting value j given value i as an input.
+       The dimensions of the matrix are `len(values) x len(values)`.
+
+    >>> mechanism = RandomizedResponse(values=['Yes', 'No'], probability_distribution=[1, 0])
+    >>> mechanism.anonymize('Yes')
+    'Yes'
+    >>> mechanism.anonymize('No')
+    'Yes'
+
+    The mechanisms allows to specify a third, optional parameter `default_value`.
+    This mechanism usually requires the list of `values` to be exhaustive over all possible inputs.
+    If `anonymize` is called with an unknown value, this mechanism may raise a ValueError.
+    Specifying the `default_value` prevents this and returns the `default_value` in such cases.
+
+    >>> mechanism = RandomizedResponse(values=['Yes', 'No'], probability_distribution=[0, 1], default_value='<UNKNOWN>')
+    >>> mechanism.anonymize('Yes')
+    'No'
+    >>> mechanism.anonymize('Foobar')
+    '<UNKNOWN>'
+    """
+
     MECHANISM: constr(regex="^randomizedResponse$") = "randomizedResponse"
     values: List[str]
     mode: RandomizedResponseMode = RandomizedResponseMode.custom
-    probability_distribution: Optional[DiscreteDistributionModel] = None  # RandomizedResponseMode.{custom, coin}
+    # RandomizedResponseMode.{custom, coin}:
+    probability_distribution: Optional[Union[List[float], List[List[float]], DiscreteDistribution]] = None
     epsilon: Optional[float] = None  # Only used for RandomizedResponseMode.dp
     coin_p: Optional[float] = None  # Only used for RandomizedResponseMode.coin
     default_value: Optional[str] = None
@@ -31,8 +69,17 @@ class RandomizedResponseParameters(MechanismModel):
             raise ValueError("Missing required property: values")
         mode = values["mode"]
         if mode in (RandomizedResponseMode.custom, RandomizedResponseMode.coin):
-            num_values = len(values["values"])
-            if not isinstance(v, DiscreteDistributionModel) or v.shape() != num_values:
+            num_probabilities = len(v)
+
+            # For lists, we need to ensure they have the right shape.
+            if isinstance(v, list):
+                is_matrix = any([isinstance(row, list) for row in v])
+                if num_probabilities == 0 or (
+                    is_matrix and any([not isinstance(row, list) or len(row) != num_probabilities for row in v])
+                ):
+                    raise ValueError("Size of weights must not be 0 and must be a list or square matrix")
+
+            if num_probabilities != len(values["values"]):
                 raise ValueError("Size of probability distribution does not match values")
             return v
         else:
@@ -58,13 +105,6 @@ class RandomizedResponseParameters(MechanismModel):
         else:
             return None
 
-    def build(self):
-        if self.mode == RandomizedResponseMode.dp:
-            return RandomizedResponse.with_dp(self.values, self.epsilon, self.default_value)
-        elif self.mode == RandomizedResponseMode.coin:
-            return RandomizedResponse.with_coin(self.values, self.coin_p, self.probability_distribution, self.default_value)
-        return RandomizedResponse(self)
-
     class Config:
         # Make sure conditional requirements are adequately reflected.
         schema_extra = {
@@ -75,79 +115,33 @@ class RandomizedResponseParameters(MechanismModel):
             ]
         }
 
-
-class RandomizedResponse:
-    """
-    The randomized response mechanisms anonymizes input by replacing it with a certain probability
-    with a value drawn from a given probability distribution.
-
-    See: "Using Randomized Response for Differential Privacy Preserving Data Collection" by Wang, Wu, and Hu
-    http://csce.uark.edu/~xintaowu/publ/DPL-2014-003.pdf
-    Section 4: POLYCHOTOMOUS ATTRIBUTE
-    """
-
-    def __init__(self, values, probability_distribution=None, **kwargs):
+    def __init__(self, **kwargs):
         """
         Initiates the randomized response mechanism.
-        This mechanisms takes two mandatory parameters: `values` and `probability_distribution`.
-        Alternatively, a `RandomizedResponseParameters` object can be passed.
-
-        The `values` parameter defines the list of potential replacements to select from.
-        The `probability_distribution` parameter can be either of the following three:
-        1) An instance of `DiscreteDistribution`,
-        2) A list of weights with `len(probability_distribution) == len(values)`,
-        3) A matrix where each row represents the list of weights for an input value,
-           i.e., `probability_distribution[i][j]` is the probability of outputting value j given value i as an input.
-           The dimensions of the matrix are `len(values) x len(values)`.
-
-        >>> mechanism = RandomizedResponse(['Yes', 'No'], [1, 0])
-        >>> mechanism.anonymize('Yes')
-        'Yes'
-        >>> mechanism.anonymize('No')
-        'Yes'
-
-        The mechanisms allows to specify a third, optional parameter `default_value`.
-        This mechanism usually requires the list of `values` to be exhaustive over all possible inputs.
-        If `anonymize` is called with an unknown value, this mechanism may raise a ValueError.
-        Specifying the `default_value` prevents this and returns the `default_value` in such cases.
-
-        >>> mechanism = RandomizedResponse(['Yes', 'No'], [0, 1], default_value='<UNKNOWN>')
-        >>> mechanism.anonymize('Yes')
-        'No'
-        >>> mechanism.anonymize('Foobar')
-        '<UNKNOWN>'
         """
+        super().__init__()
 
-        if not isinstance(probability_distribution, DiscreteDistribution):
-            parameters = (
-                values
-                if isinstance(values, RandomizedResponseParameters)
-                else RandomizedResponseParameters(
-                    values=values,
-                    probability_distribution=DiscreteDistributionModel(weights=probability_distribution),
-                    **kwargs
-                )
-            )
-            probability_distribution = DiscreteDistribution(parameters.probability_distribution)
-            values = parameters.values
-            default_value = parameters.default_value
-        else:
-            default_value = kwargs["default_value"] if "default_value" in kwargs else None
+        # Build DiscreteDistribution object.
+        distribution = None if self.probability_distribution is None else DiscreteDistribution(self.probability_distribution)
 
-        self.cum_distr = probability_distribution.to_cumulative()
-        self.values = values
-        self.default_value = default_value
+        # Create the cumulative probability distribution from the model.
+        if self.mode == RandomizedResponseMode.dp:
+            distribution = RandomizedResponse.__with_dp(len(self.values), self.epsilon)
+        elif self.mode == RandomizedResponseMode.coin:
+            distribution = RandomizedResponse.__with_coin(len(self.values), self.coin_p, distribution)
+
+        # `distribution` cannot be None at this point if the model was validated.
+        self.cum_distr = distribution.to_cumulative()
 
     @classmethod
-    def with_dp(cls, values, epsilon, default_value=None):
+    def __with_dp(cls, t, epsilon):
         """
-        Instantiates a randomized response mechanism that is epsilon-differentially private.
+        Calculates the distribution for a DP mechanisms with `t` values and the privacy parameter `epsilon`.
 
         Let `t = len(values)`.
         This results in a probability of `e^epsilon / (t - 1 + e^epsilon) for revealing the true value,
         and a probability of `1 / (t - 1 + e^epsilon)` for each other value.
         """
-        t = len(values)
         e_eps = math.exp(epsilon)
         denominator = t - 1 + e_eps
         p_ii = e_eps / denominator
@@ -161,12 +155,12 @@ class RandomizedResponse:
         # Sum the two matrices to obtain our result
         weights += diag
         d = DiscreteDistribution(weights)
-        return RandomizedResponse(values, d, default_value=default_value)
+        return d
 
     @classmethod
-    def with_coin(cls, values, coin_p=0.5, probability_distribution=None, default_value=None):
+    def __with_coin(cls, num_values, coin_p=0.5, probability_distribution=None):
         """
-        Instantiates a randomized response mechanism that simulates the following experiment:
+        Calculates the distribution for a mechanism that simulates the following experiment:
         1) Toss a coin (with heads having a probability `coin_p`, which defaults to 0.5).
         2) If heads, report true value.
         3) If tails, then throw another coin to randomly choose one element from `values`
@@ -176,12 +170,12 @@ class RandomizedResponse:
            i.e., `probability_distribution[i][j]` is the probability of outputting value j given value i as an input.
         """
         if probability_distribution is None:
-            d = DiscreteDistribution.uniform_distribution(len(values))
+            d = DiscreteDistribution.uniform_distribution(num_values)
         else:
             d = DiscreteDistribution(probability_distribution)
 
         d_rr = d.with_rr_toss(coin_p)
-        return RandomizedResponse(values, d_rr, default_value=default_value)
+        return d_rr
 
     def anonymize(self, input_value):
         """
@@ -196,3 +190,8 @@ class RandomizedResponse:
             raise e
         output_idx = self.cum_distr.sample_element(input_idx)
         return self.values[output_idx]
+
+
+class RandomizedResponseParameters(CamelBaseModel):
+    mechanism: constr(regex="^randomizedResponse$") = "randomizedResponse"
+    config: RandomizedResponse

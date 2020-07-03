@@ -2,9 +2,8 @@ import random
 
 import numpy as np
 import pytest
-from pydantic import ValidationError
 
-from anonymizer.utils.discrete_distribution import DiscreteDistribution, DiscreteDistributionModel
+from anonymizer.utils.discrete_distribution import DiscreteDistribution
 
 
 def test_uniform():
@@ -26,12 +25,8 @@ def test_uniform():
 
 def test_simple():
     random.seed(0)
-    thrown = False
-    try:
-        d = DiscreteDistribution([])
-    except ValueError:
-        thrown = True
-    assert thrown
+    with pytest.raises(ValueError):
+        DiscreteDistribution([])
 
     # Create distribution that always returns 2.
     d = DiscreteDistribution([0, 0, 2, 0, 0])
@@ -89,25 +84,3 @@ def test_others():
 
     with pytest.raises(ValueError):
         DiscreteDistribution(np.array([[1], [2, 3]]))
-
-
-def test_model():
-    model = DiscreteDistributionModel(weights=[1, 0])
-    d = DiscreteDistribution(model)
-    c = d.to_cumulative()
-    assert c.sample_element(0, rng=random) == 0
-
-    model = DiscreteDistributionModel(weights=[[1, 0], [0, 1]])
-    d = DiscreteDistribution(model)
-    c = d.to_cumulative()
-    assert c.sample_element(0, rng=random) == 0
-    assert c.sample_element(1, rng=random) == 1
-
-    with pytest.raises(ValidationError):
-        DiscreteDistributionModel(weights=1)
-
-    with pytest.raises(ValidationError):
-        DiscreteDistributionModel(weights=[1, [2, 3]])
-
-    with pytest.raises(ValidationError):
-        DiscreteDistributionModel(weights=[[1], [2, 3]])

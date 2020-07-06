@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Extra
 
 
 def to_camel_case(snake_case):
@@ -13,3 +13,4 @@ class CamelBaseModel(BaseModel):
     class Config:
         alias_generator = to_camel_case
         allow_population_by_field_name = True
+        extra = Extra.forbid

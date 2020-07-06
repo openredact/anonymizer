@@ -19,10 +19,10 @@ def piis():
 
 def test_with_default(piis):
     config = AnonymizerConfig(
-        default_mechanism=SuppressionParameters(config=Suppression()),
+        default_mechanism=Suppression(),
         mechanisms_by_tag={
-            "foo": SuppressionParameters(config=Suppression(suppression_char="Y", custom_length=3)),
-            "bar": PseudonymizationParameters(config=Pseudonymization(format_string="Bar {}")),
+            "foo": Suppression(suppression_char="Y", custom_length=3),
+            "bar": Pseudonymization(format_string="Bar {}"),
         },
     )
     anonymizer = Anonymizer(config)

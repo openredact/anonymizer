@@ -87,10 +87,9 @@ def test_others():
         DiscreteDistribution(np.array([[1], [2, 3]]))
 
 
-class Test(BaseModel):
-    foobar: DiscreteDistribution
-
-
 def test_validation():
+    class Test(BaseModel):
+        foobar: DiscreteDistribution
+
     with pytest.raises(ValidationError):
         Test(foobar=1)

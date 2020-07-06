@@ -1,7 +1,15 @@
 from typing import Union, List, Iterator
 
+from ..mechanisms import mechanism_config_types, mechanism_types, is_config
 from anonymizer.anonymization.config import AnonymizerConfig
 from anonymizer.anonymization.pii import Pii, AnonymizedPii
+
+
+def _to_mechanism(mechanism_or_config: Union[mechanism_config_types, mechanism_types]) -> mechanism_types:
+    if is_config(mechanism_or_config):
+        return mechanism_or_config.config
+    else:
+        return mechanism_or_config
 
 
 class Anonymizer:
@@ -15,8 +23,8 @@ class Anonymizer:
         """
         Create an Anonymizer from an `AnonymizerConfig`.
         """
-        self.default_mechanism = None if config.default_mechanism is None else config.default_mechanism.config
-        self.mechanisms_by_tag = {tag: c.config for tag, c in config.mechanisms_by_tag.items()}
+        self.default_mechanism = None if config.default_mechanism is None else _to_mechanism(config.default_mechanism)
+        self.mechanisms_by_tag = {tag: _to_mechanism(c) for tag, c in config.mechanisms_by_tag.items()}
 
     def anonymize(self, piis: Union[Pii, List[Pii]]) -> Union[AnonymizedPii, Iterator[AnonymizedPii]]:
         """

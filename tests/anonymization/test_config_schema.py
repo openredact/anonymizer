@@ -44,4 +44,5 @@ def test_detect_mismatched_options():
         validate(instance=config_dict, schema=AnonymizerConfig.schema())
 
     with pytest.raises(PydanticValidationError):
-        AnonymizerConfig(**config_dict)
+        a = AnonymizerConfig(**config_dict)
+        print(type(a.mechanisms_by_tag["tag1"]))

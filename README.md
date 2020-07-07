@@ -1,5 +1,7 @@
 # Anonymizer
 
+_**:warning: Disclaimer :warning::**_ This is a prototype. Do not use for anything critical.
+
 A Python module that provides multiple anonymization techniques for text.
 
 ![Tests](https://github.com/openredact/anonymizer/workflows/Tests/badge.svg?branch=master)
@@ -40,3 +42,7 @@ The tests can be executed with:
 ```
 pytest --doctest-modules --cov-report term --cov=anonymizer
 ```
+
+## License
+
+MIT

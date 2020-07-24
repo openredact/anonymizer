@@ -54,7 +54,6 @@ class RandomizedResponse(StatefulMechanism):
     '<UNKNOWN>'
     """
 
-    MECHANISM: constr(regex="^randomizedResponse$") = "randomizedResponse"
     values: List[str]
     mode: RandomizedResponseMode = RandomizedResponseMode.custom
     # RandomizedResponseMode.{custom, coin}:
@@ -187,7 +186,7 @@ class RandomizedResponse(StatefulMechanism):
 
     def apply(self, input_value):
         """
-        Anonymizes the given input parameter by generalizing it.
+        Anonymizes the given input parameter.
         If the input_value is unknown to the distribution and no `default_value` is set, it raises a ValueError.
         """
         try:

@@ -1,4 +1,5 @@
-from datetime import datetime, timezone
+from datetime import datetime
+from anonymizer.utils.dateutil.parser import parse
 
 from . import Encoder
 
@@ -6,26 +7,27 @@ from . import Encoder
 class DateTimeEncoder(Encoder):
     """
     This encoder can en-/decode date and time strings into float values and back.
+    The encoder will automatically detect the input format and return it via the context object.
 
-    >>> enc = DateTimeEncoder('%I:%M%p')
-    >>> enc.decode(enc.encode('10:30AM'))
+    >>> enc = DateTimeEncoder()
+    >>> enc.decode(*enc.encode('10:30AM'))
     '10:30AM'
     >>> enc.encode('10:30AM')
-    -2208951000.0
-    >>> enc.decode(-2208951000.0 + 60*60)
+    -2208951000.0, '%I:%M%p'
+    >>> enc.decode(-2208951000.0 + 60*60, '%I:%M%p')
     '11:30AM'
     """
 
-    def __init__(self, date_format):
-        """
-        Creates a new DateTimeEncoder based on a given format string.
-        """
-        self.date_format = date_format
-
     def encode(self, value):
-        dt = datetime.strptime(value, self.date_format).replace(tzinfo=timezone.utc)
-        return dt.timestamp()
+        dt, fmt = parse(value, return_format=True)
+        ctx = dict(fmt=fmt, tz=dt.tzinfo)
+        return dt.timestamp(), ctx
 
-    def decode(self, value):
-        dt = datetime.fromtimestamp(value, tz=timezone.utc)
-        return dt.strftime(self.date_format)
+    def decode(self, value, ctx):
+        try:
+            tz, fmt = ctx["tz"], ctx["fmt"]
+        except (TypeError, KeyError):
+            raise ValueError("Invalid context")
+
+        dt = datetime.fromtimestamp(value, tz=tz)
+        return dt.strftime(fmt)

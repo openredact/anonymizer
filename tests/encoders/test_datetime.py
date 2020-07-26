@@ -4,27 +4,35 @@ import pytest
 
 
 def test_time():
-    enc = DateTimeEncoder("%H:%M")
+    enc = DateTimeEncoder()
 
-    assert enc.decode(enc.encode("12:30")) == "12:30"
-    assert enc.decode(enc.encode("12:30") + 60 * 60) == "13:30"
-    assert enc.decode(enc.encode("23:30") + 2 * 60 * 60 + 5 * 60) == "01:35"
+    v, ctx = enc.encode("12:30")
+    assert enc.decode(v, ctx) == "12:30"
+    assert enc.decode(v + 60 * 60, ctx) == "13:30"
+    v, ctx = enc.encode("23:30")
+    assert enc.decode(v + 2 * 60 * 60 + 5 * 60, ctx) == "01:35"
 
     with pytest.raises(ValueError):
         enc.encode("foo")
 
+    with pytest.raises(ValueError):
+        enc.decode(123, None)
+
 
 def test_date():
-    enc = DateTimeEncoder("%d.%m.%Y")
+    enc = DateTimeEncoder()
 
-    assert enc.decode(enc.encode("11.12.2019")) == "11.12.2019"
-    assert enc.decode(enc.encode("11.12.2019") + 60 * 60) == "11.12.2019"
-    assert enc.decode(enc.encode("31.12.2019") + 24 * 60 * 60) == "01.01.2020"
+    v, ctx = enc.encode("11.12.2019")
+    assert enc.decode(v, ctx) == "11.12.2019"
+    assert enc.decode(v + 60 * 60, ctx) == "11.12.2019"
+    v, ctx = enc.encode("31.12.2019")
+    assert enc.decode(v + 24 * 60 * 60, ctx) == "01.01.2020"
 
 
 def test_datetime():
-    enc = DateTimeEncoder("%d.%m.%Y %H:%M")
+    enc = DateTimeEncoder()
 
-    assert enc.decode(enc.encode("31.12.2019 12:30")) == "31.12.2019 12:30"
-    assert enc.decode(enc.encode("31.12.2019 12:30") + 60 * 60) == "31.12.2019 13:30"
-    assert enc.decode(enc.encode("31.12.2019 12:30") + 23 * 60 * 60) == "01.01.2020 11:30"
+    v, ctx = enc.encode("31.12.2019 12:30")
+    assert enc.decode(v, ctx) == "31.12.2019 12:30"
+    assert enc.decode(v + 60 * 60, ctx) == "31.12.2019 13:30"
+    assert enc.decode(v + 23 * 60 * 60, ctx) == "01.01.2020 11:30"

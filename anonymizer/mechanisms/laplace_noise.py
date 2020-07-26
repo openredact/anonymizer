@@ -1,11 +1,11 @@
 import numpy as np
 from pydantic.types import constr, PositiveFloat
 
-from .stateful_mechanism import StatefulMechanism
+from .encoding_mechanism import EncodingMechanism
 from ..utils.pydantic_base_model import CamelBaseModel
 
 
-class LaplaceNoise(StatefulMechanism):
+class LaplaceNoise(EncodingMechanism):
     """
     The laplace noise mechanisms anonymizes input by perturbing it using the laplace distribution.
     While this approach is similar to noising results using the laplace mechanism for Differential Privacy,

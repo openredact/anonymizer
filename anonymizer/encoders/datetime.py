@@ -12,9 +12,8 @@ class DateTimeEncoder(Encoder):
     >>> enc = DateTimeEncoder()
     >>> enc.decode(*enc.encode('10:30AM'))
     '10:30AM'
-    >>> enc.encode('10:30AM')
-    (1595752200.0, {'fmt': '%I:%M%p', 'tz': None})
-    >>> enc.decode(1595752200.0 + 60*60, {'fmt': '%I:%M%p', 'tz': None})
+    >>> v, ctx = enc.encode('10:30AM')
+    >>> enc.decode(v + 60*60, ctx)
     '11:30AM'
     """
 

@@ -16,22 +16,8 @@ class LaplaceNoise(EncodingMechanism):
 
     The optional parameter `sensitivity` is also used to scale the noise (larger sensitivity means more noise).
 
-    >>> mechanism = LaplaceNoise(values=['Yes', 'No'], probability_distribution=[1, 0])
-    >>> mechanism.anonymize('Yes')
-    'Yes'
-    >>> mechanism.anonymize('No')
-    'Yes'
-
-    The mechanisms allows to specify a third, optional parameter `default_value`.
-    This mechanism usually requires the list of `values` to be exhaustive over all possible inputs.
-    If `anonymize` is called with an unknown value, this mechanism may raise a ValueError.
-    Specifying the `default_value` prevents this and returns the `default_value` in such cases.
-
-    >>> mechanism = RandomizedResponse(values=['Yes', 'No'], probability_distribution=[0, 1], default_value='<UNKNOWN>')
-    >>> mechanism.anonymize('Yes')
-    'No'
-    >>> mechanism.anonymize('Foobar')
-    '<UNKNOWN>'
+    >>> mechanism = LaplaceNoise(epsilon=10000000000)
+    >>> assert abs(mechanism.anonymize(1.5) - 1.5) < 0.1  # with high probability
     """
 
     epsilon: PositiveFloat

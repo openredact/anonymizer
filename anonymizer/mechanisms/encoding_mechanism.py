@@ -12,8 +12,9 @@ class EncodingMechanism(StatefulMechanism, abc.ABC):
 
     >>> from anonymizer.mechanisms.laplace_noise import LaplaceNoise
     >>> from anonymizer.encoders import EncoderType
+    >>> import re
     >>> mechanism = LaplaceNoise(epsilon=1, encoder=EncoderType.datetime)
-    >>> print(mechanism.anonymize('2012-01-18'))
+    >>> assert re.fullmatch('\\d{4}-\\d{2}-\\d{2}', mechanism.anonymize('2012-01-18'))
     """
 
     encoder: Optional[Union[EncoderType, Encoder]] = None

@@ -715,14 +715,13 @@ class parser(object):
             .. doctest::
                :options: +NORMALIZE_WHITESPACE
 
-                >>> from dateutil.parser import parse
+                >>> from anonymizer.utils.dateutil.parser import parse
                 >>> from dateutil.tz import gettz
                 >>> tzinfos = {"BRST": -7200, "CST": gettz("America/Chicago")}
                 >>> parse("2012-01-19 17:21:00 BRST", tzinfos=tzinfos)
-                datetime.datetime(2012, 1, 19, 17, 21, tzinfo=tzoffset(u'BRST', -7200))
+                datetime.datetime(2012, 1, 19, 17, 21, tzinfo=tzoffset('BRST', -7200))
                 >>> parse("2012-01-19 17:21:00 CST", tzinfos=tzinfos)
-                datetime.datetime(2012, 1, 19, 17, 21,
-                                  tzinfo=tzfile('/usr/share/zoneinfo/America/Chicago'))
+                datetime.datetime(2012, 1, 19, 17, 21, tzinfo=tzfile('/usr/share/zoneinfo/America/Chicago'))
 
             This parameter is ignored if ``ignoretz`` is set.
 
@@ -833,9 +832,9 @@ class parser(object):
 
             .. doctest::
 
-                >>> from dateutil.parser import parse
+                >>> from anonymizer.utils.dateutil.parser import parse
                 >>> parse("Today is January 1, 2047 at 8:21:00AM", fuzzy_with_tokens=True)
-                (datetime.datetime(2047, 1, 1, 8, 21), (u'Today is ', u' ', u'at '))
+                (datetime.datetime(2047, 1, 1, 8, 21), ('Today is ', ' ', ' ', 'at '))
 
         """
         if fuzzy_with_tokens:
@@ -1468,12 +1467,6 @@ class parser(object):
         return dt
 
     def _recombine_skipped(self, tokens, skipped_idxs):
-        """
-        >>> tokens = ["foo", " ", "bar", " ", "19June2000", "baz"]
-        >>> skipped_idxs = [0, 1, 2, 5]
-        >>> _recombine_skipped(tokens, skipped_idxs)
-        ["foo bar", "baz"]
-        """
         skipped_tokens = []
         for i, idx in enumerate(sorted(skipped_idxs)):
             if i > 0 and idx - 1 == skipped_idxs[i - 1]:
@@ -1526,14 +1519,13 @@ def parse(timestr, parserinfo=None, **kwargs):
         .. doctest::
            :options: +NORMALIZE_WHITESPACE
 
-            >>> from dateutil.parser import parse
+            >>> from anonymizer.utils.dateutil.parser import parse
             >>> from dateutil.tz import gettz
             >>> tzinfos = {"BRST": -7200, "CST": gettz("America/Chicago")}
             >>> parse("2012-01-19 17:21:00 BRST", tzinfos=tzinfos)
-            datetime.datetime(2012, 1, 19, 17, 21, tzinfo=tzoffset(u'BRST', -7200))
+            datetime.datetime(2012, 1, 19, 17, 21, tzinfo=tzoffset('BRST', -7200))
             >>> parse("2012-01-19 17:21:00 CST", tzinfos=tzinfos)
-            datetime.datetime(2012, 1, 19, 17, 21,
-                              tzinfo=tzfile('/usr/share/zoneinfo/America/Chicago'))
+            datetime.datetime(2012, 1, 19, 17, 21, tzinfo=tzfile('/usr/share/zoneinfo/America/Chicago'))
 
         This parameter is ignored if ``ignoretz`` is set.
 
@@ -1563,14 +1555,18 @@ def parse(timestr, parserinfo=None, **kwargs):
 
         .. doctest::
 
-            >>> from dateutil.parser import parse
+            >>> from anonymizer.utils.dateutil.parser import parse
             >>> parse("Today is January 1, 2047 at 8:21:00AM", fuzzy_with_tokens=True)
-            (datetime.datetime(2047, 1, 1, 8, 21), (u'Today is ', u' ', u'at '))
+            (datetime.datetime(2047, 1, 1, 8, 21), ('Today is ', ' ', ' ', 'at '))
+
+    :param return_format:
+        Return the detected format string.
 
     :return:
+        Depending on ``return_format``, this returns the format string as the last tuple element.
         Returns a :class:`datetime.datetime` object or, if the
         ``fuzzy_with_tokens`` option is ``True``, returns a tuple, the
-        first element being a :class:`datetime.datetime` object, the second
+        first element being the :class:`datetime.datetime` object, the second
         a tuple containing the fuzzy tokens.
 
     :raises ParserError:

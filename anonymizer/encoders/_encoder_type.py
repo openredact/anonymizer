@@ -1,6 +1,7 @@
 from enum import Enum
 
 from anonymizer.encoders.datetime import DateTimeEncoder
+from anonymizer.encoders.delimited_number import DelimitedNumberEncoder
 
 
 class EncoderType(str, Enum):
@@ -10,7 +11,10 @@ class EncoderType(str, Enum):
     """
 
     datetime = "datetime"
+    delimited_number = "delimitedNumber"
 
     def to_encoder(self):
         if self == EncoderType.datetime:
             return DateTimeEncoder()
+        elif self == EncoderType.delimited_number:
+            return DelimitedNumberEncoder()

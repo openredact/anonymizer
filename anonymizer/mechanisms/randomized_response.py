@@ -146,7 +146,7 @@ class RandomizedResponse(StatefulMechanism):
         Calculates the distribution for a DP mechanisms with `t` values and the privacy parameter `epsilon`.
 
         Let `t = len(values)`.
-        This results in a probability of `e^epsilon / (t - 1 + e^epsilon) for revealing the true value,
+        This results in a probability of `e^epsilon / (t - 1 + e^epsilon)` for revealing the true value,
         and a probability of `1 / (t - 1 + e^epsilon)` for each other value.
         """
         e_eps = math.exp(epsilon)

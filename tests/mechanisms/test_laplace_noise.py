@@ -38,3 +38,20 @@ def test_datetime():
     assert mechanism.anonymize("12:21:08") == "12:22:38"
 
     np.random = rng
+
+
+def test_delimited_number():
+    mechanism = LaplaceNoise(epsilon=0.01, stateful=True, encoder=EncoderType.delimited_number)
+
+    # Temporarily replace rng
+    rng = np.random
+    np.random = Generator(PCG64(12345))
+
+    assert mechanism.anonymize("+49 123 456") == "+49123377"
+
+    with pytest.raises(ValueError):
+        mechanism.anonymize("foo")
+
+    assert mechanism.anonymize("12.14 €") == "-33.51 €"
+
+    np.random = rng

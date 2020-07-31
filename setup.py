@@ -9,5 +9,5 @@ setup(
     license="MIT",
     description="A Python module that provides multiple anonymization techniques for text.",
     long_description=open("README.md").read(),
-    install_requires=["pydantic==1.5.1", "numpy==1.18.5"],
+    install_requires=["pydantic==1.5.1", "numpy==1.18.5", "python-dateutil==2.8.1"],
 )

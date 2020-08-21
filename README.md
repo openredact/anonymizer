@@ -1,6 +1,6 @@
 # Anonymizer
 
-_**:warning: Disclaimer :warning::**_ This is a prototype. Do not use for anything critical.
+_**⚠️ Disclaimer ⚠️:**_ This is a prototype. Do not use for anything critical.
 
 A Python module that provides multiple anonymization techniques for text.
 

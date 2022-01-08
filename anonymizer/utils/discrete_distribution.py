@@ -51,7 +51,8 @@ class DiscreteDistribution:
         # __modify_schema__ should mutate the dict it receives in place,
         # the returned value will be ignored
         field_schema.update(
-            title="DiscreteDistribution", type="object",
+            title="DiscreteDistribution",
+            type="object",
         )
 
     @classmethod

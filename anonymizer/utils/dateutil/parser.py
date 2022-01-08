@@ -203,17 +203,17 @@ class _timelex(object):
 
     @classmethod
     def isword(cls, nextchar):
-        """ Whether or not the next character is part of a word """
+        """Whether or not the next character is part of a word"""
         return nextchar.isalpha()
 
     @classmethod
     def isnum(cls, nextchar):
-        """ Whether the next character is part of a number """
+        """Whether the next character is part of a number"""
         return nextchar.isdigit()
 
     @classmethod
     def isspace(cls, nextchar):
-        """ Whether the next character is whitespace """
+        """Whether the next character is whitespace"""
         return nextchar.isspace()
 
 

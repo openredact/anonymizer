@@ -39,7 +39,8 @@ class Encoder(abc.ABC):
         # __modify_schema__ should mutate the dict it receives in place,
         # the returned value will be ignored
         field_schema.update(
-            title="Encoder", type="object",
+            title="Encoder",
+            type="object",
         )
 
     @classmethod

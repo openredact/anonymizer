@@ -140,7 +140,7 @@ class TestFormat(object):
             ("%d %b %Y", "25 Sep 2003"),
             ("%m %d %Y", "09 25 2003"),
             ("%d %m %Y", "25 09 2003"),
-            ("%y %d %b", "03 25 Sep",),
+            ("%y %d %b", "03 25 Sep"),
         ],
     )
     def test_strftime_formats_2003Sep25(self, fmt, dstr):

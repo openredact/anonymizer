@@ -1,12 +1,19 @@
 # Anonymizer
 
-_**⚠️ Disclaimer ⚠️:**_ This is a prototype. Do not use for anything critical.
-
 A Python module that provides multiple anonymization techniques for text.
 
-![Tests](https://github.com/openredact/anonymizer/workflows/Tests/badge.svg?branch=master)
-![Black & Flake8](https://github.com/openredact/anonymizer/workflows/Black%20&%20Flake8/badge.svg?branch=master)
 [![Code style: Black](https://img.shields.io/badge/code%20style-black-000000.svg?style=flat-square)](https://github.com/ambv/black)
+[![Moved](https://img.shields.io/badge/project-moved-blue)](https://gitlab.opencode.de/bmbf/datenlabor/openredact)
+
+# ⚠️ Moved
+
+This project has moved to: https://gitlab.opencode.de/bmbf/datenlabor/openredact
+
+This repository is archived and no longer maintained.
+
+---
+
+_**⚠️ Disclaimer ⚠️:**_ This is a prototype. Do not use for anything critical.
 
 ## Install requirements
 
